@@ -1,0 +1,11 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and fill in your own values
+
+# Your SSH public key for VM access
+admin_ssh_key = "ssh-rsa YOUR_SSH_PUBLIC_KEY"
+
+# Your Azure subscription ID
+subscription_id = "your-subscription-id"
+
+# Your Azure tenant ID
+tenant_id = "your-tenant-id"

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # DataHub Metadata Service (GMS)
+  datahub-gms:
+    image: linkedin/datahub-gms:${DATAHUB_VERSION:-latest}
+    environment:
+      - EBEAN_DATASOURCE_USERNAME=datahub
+      - EBEAN_DATASOURCE_PASSWORD=datahub
+      - EBEAN_DATASOURCE_HOST=mysql
+      - EBEAN_DATASOURCE_URL=jdbc:mysql://mysql:3306/datahub?verifyServerCertificate=false&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - EBEAN_DATASOURCE_DRIVER=com.mysql.jdbc.Driver
+      - KAFKA_BOOTSTRAP_SERVER=broker:29092
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - GRAPH_SERVICE_IMPL=elasticsearch
+    depends_on:
+      - elasticsearch
+      - mysql
+      - broker
+    ports:
+      - "8080:8080"
+
+  # DataHub Frontend
+  datahub-frontend:
+    image: linkedin/datahub-frontend-react:${DATAHUB_VERSION:-latest}
+    environment:
+      - DATAHUB_GMS_HOST=datahub-gms
+      - DATAHUB_GMS_PORT=8080
+      - DATAHUB_SECRET=YouKnowNothing
+    depends_on:
+      - datahub-gms
+    ports:
+      - "9002:9002"
+
+  # DataHub MySQL Database
+  mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_DATABASE=datahub
+      - MYSQL_USER=datahub
+      - MYSQL_PASSWORD=datahub
+      - MYSQL_ROOT_PASSWORD=datahub
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  # DataHub Elasticsearch
+  elasticsearch:
+    image: elasticsearch:7.9.3
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  # DataHub Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.4.0
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_datalog:/var/lib/zookeeper/log
+
+  broker:
+    image: confluentinc/cp-kafka:5.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    volumes:
+      - broker_data:/var/lib/kafka/data
+    ports:
+      - "29092:29092"
+
+  # DataHub Setup
+  datahub-setup:
+    image: linkedin/datahub-setup:${DATAHUB_VERSION:-latest}
+    environment:
+      - KAFKA_BOOTSTRAP_SERVER=broker:9092
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+    depends_on:
+      - elasticsearch
+      - broker
+      - mysql
+      - datahub-gms
+    command: >
+      bash -c "echo 'Waiting for services to start...' &&
+               sleep 30 &&
+               datahub-setup"
+
+volumes:
+  mysql_data:
+  elasticsearch_data:
+  zookeeper_data:
+  zookeeper_datalog:
+  broker_data:
