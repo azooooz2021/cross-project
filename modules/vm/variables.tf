@@ -23,11 +23,6 @@ variable "admin_username" {
   type        = string
 }
 
-variable "admin_ssh_key" {
-  description = "SSH public key for VM authentication"
-  type        = string
-}
-
 variable "subnet_id" {
   description = "ID of the subnet for the VM"
   type        = string

@@ -71,8 +71,3 @@ variable "admin_username" {
   default     = "adminuser"
 }
 
-variable "admin_ssh_key" {
-  description = "SSH public key for VM authentication"
-  type        = string
-  # No default value - must be provided in terraform.tfvars
-}

@@ -10,5 +10,5 @@ output "subnet_id" {
 
 output "resource_group_name" {
   description = "Name of the resource group"
-  value       = azurerm_resource_group.rg.name
+  value       = var.resource_group_name
 }
