@@ -1,3 +1,6 @@
+![Azure Deployment Framework](azure_framework.png)
+
+
 # DataHub Terraform Deployment
 
 This Terraform project deploys a virtual machine in Azure with DataHub automatically installed using Docker.
